@@ -41,7 +41,7 @@ Luồng chuẩn: tạo manifest → khởi động uploader → đăng ký chunk
 
 ### Công nghệ
 
-Nếu cả nhóm chưa có lựa chọn, đề xuất Java + TCP Socket + ExecutorService + thư viện JSON + JUnit. Đây là lựa chọn thiết kế, không phải yêu cầu giảng viên. Nếu nhóm thành thạo Python/C++ hơn, giữ nguyên hợp đồng và chuyển ngôn ngữ; không chia ba module sang ba ngôn ngữ để tăng rủi ro tích hợp.
+Nhóm đã chọn Java + TCP Socket + ExecutorService + thư viện JSON + JUnit. Milestone đầu Student 3 dùng Java 21, Maven, Jackson JSON và JUnit Jupiter; phiên bản dependency nằm trong pom.xml. Đây là lựa chọn thiết kế của nhóm, không phải yêu cầu ngôn ngữ từ giảng viên.
 
 ### Metadata
 
