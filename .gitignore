@@ -1,7 +1,23 @@
 /target/
+**/target/
+/tracker-data/
+/peer-storage/
+**/peer-storage/
 /tmp/
 /.idea/
 /.vscode/
 *.iml
 *.class
 /demo-output/
+
+# Local coursework, plans, launchers and generated files
+/*.pdf
+/PLAN*.md
+/docs/superpowers/
+/docs/PHASE_*.md
+/run-demo.*
+*.log
+**/node_modules/
+**/dist/
+.env
+.env.*

@@ -1,0 +1,14 @@
+server:
+  port: 8081
+  address: 127.0.0.1
+  servlet:
+    session:
+      cookie:
+        name: BTL_${peer.id:${server.port:8081}}
+        http-only: true
+        same-site: strict
+spring:
+  servlet:
+    multipart:
+      max-file-size: 256MB
+      max-request-size: 257MB
