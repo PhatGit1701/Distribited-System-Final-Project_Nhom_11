@@ -1,8 +1,9 @@
 export class ApiError extends Error {
-  constructor(message, status) {
+  constructor(message, status, code = 'REQUEST_FAILED') {
     super(message);
     this.name = 'ApiError';
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -19,7 +20,7 @@ export async function request(path, { method = 'GET', body, token, signal } = {}
   let value;
   try { value = text ? JSON.parse(text) : null; } catch { value = null; }
   if (!response.ok) {
-    throw new ApiError(value?.message || value?.error || `Request failed (${response.status})`, response.status);
+    throw new ApiError(value?.message || value?.error || `Request failed (${response.status})`, response.status, value?.code);
   }
   return value;
 }

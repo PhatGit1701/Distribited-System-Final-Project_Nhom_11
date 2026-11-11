@@ -1,14 +1,12 @@
 server:
   port: ${TRACKER_PORT:8080}
 spring:
-  datasource:
-    url: ${TRACKER_DB_URL:jdbc:h2:file:./tracker-data/tracker}
-    username: ${TRACKER_DB_USER:sa}
-    password: ${TRACKER_DB_PASSWORD:}
+  config:
+    import: optional:file:./.env[.properties]
+  profiles:
+    default: prod
   jpa:
     open-in-view: false
-    hibernate:
-      ddl-auto: update
 tracker:
   jwt:
     secret: ${TRACKER_JWT_SECRET:}

@@ -7,7 +7,8 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api': 'http://localhost:8081',
+      // Keep the browser Host so NodeSessionFilter can verify Origin through the dev proxy.
+      '/api': { target: 'http://127.0.0.1:8081', changeOrigin: false },
       '/ws': { target: 'ws://localhost:8081', ws: true },
     },
   },

@@ -1,4 +1,5 @@
 package vn.nhom11.bittorrent.peer;
+import vn.nhom11.bittorrent.peer.config.PeerProperties;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

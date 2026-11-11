@@ -42,6 +42,9 @@ class NodeDashboardTest {
                     } else if(path.equals("/api/tracker/torrents")) result=List.of(metadata);
                     else if(path.startsWith("/api/tracker/torrents/")) result=metadata;
                     else if(path.startsWith("/api/tracker/swarm/")) result=List.of(seed.info(2));
+                    else if(path.startsWith("/api/tracker/sources/")) result=new SourcePlan(metadata.fileId(),List.of(
+                            new SourcePlan.ChunkSources(0,1,List.of(seed.info(2))),
+                            new SourcePlan.ChunkSources(1,1,List.of(seed.info(2)))),1,0,30);
                     else result=Map.of("ok",true);
                     byte[] bytes=json.writeValueAsBytes(result);
                     exchange.getResponseHeaders().set("Content-Type","application/json");

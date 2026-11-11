@@ -1,4 +1,11 @@
 package vn.nhom11.bittorrent.peer;
+import vn.nhom11.bittorrent.peer.client.TrackerGateway;
+import vn.nhom11.bittorrent.peer.repository.ChunkStore;
+import vn.nhom11.bittorrent.peer.model.DownloadSettings;
+import vn.nhom11.bittorrent.peer.model.ChunkDownloadState;
+import vn.nhom11.bittorrent.peer.model.PeerIdentity;
+import vn.nhom11.bittorrent.peer.service.TitForTatManager;
+import vn.nhom11.bittorrent.peer.service.ParallelDownloadManager;
 
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.io.TempDir;
@@ -22,6 +29,10 @@ class ParallelDownloadManagerTest {
         TorrentMetadata metadata;
         volatile List<PeerNodeInfo> peers=List.of();
         final List<HeartbeatRequest> heartbeats=new CopyOnWriteArrayList<>();
+        final List<String> badChunks=new CopyOnWriteArrayList<>();
+        public void reportBadChunk(String fileId,String peerId,int index,String expected,String actual) {
+            assertNotEquals(expected,actual);badChunks.add(peerId);
+        }
         Tracker(TorrentMetadata m){metadata=m;}
         public TorrentMetadata metadata(String id){return metadata;}
         public List<PeerNodeInfo> swarm(String id){return peers;}
@@ -88,6 +99,30 @@ class ParallelDownloadManagerTest {
             assertArrayEquals(f.bytes(),Files.readAllBytes(path));
             assertEquals(f.metadata().totalChunks(),store.get(f.metadata().fileId()).availableChunks().size());
             assertEquals(f.metadata().totalChunks(),tracker.heartbeats.getLast().availableChunks().size());
+            manager.advertise(store.get(f.metadata().fileId()));
+            assertEquals(size, tracker.heartbeats.getLast().downloaded());
+            assertEquals(1, tracker.heartbeats.stream().filter(r -> "completed".equals(r.event())).count());
+        }
+        assertEquals("stopped", tracker.heartbeats.getLast().event());
+        assertEquals(size, tracker.heartbeats.getLast().downloaded());
+    }
+    @Test void respectsTrackerSourceOrderingInsteadOfSortingSeederIds() throws Exception {
+        var f=fixture(100);
+        var firstCalls=new AtomicInteger();
+        var secondCalls=new AtomicInteger();
+        try(var a=new TestPeer("a",(socket,r)->{ firstCalls.incrementAndGet();send(socket,r.chunkIndex(),f.chunk(r.chunkIndex())); });
+            var b=new TestPeer("b",(socket,r)->{ secondCalls.incrementAndGet();send(socket,r.chunkIndex(),f.chunk(r.chunkIndex())); });
+            var store=new ChunkStore(temp.resolve("source-order"))) {
+            var tracker=new Tracker(f.metadata()) {
+                @Override public SourcePlan sources(String id,String requester,Set<Integer> have,int maximum) {
+                    return new SourcePlan(id,List.of(new SourcePlan.ChunkSources(0,2,List.of(b.info(1),a.info(1)))),2,0,30);
+                }
+            };
+            try(var manager=new ParallelDownloadManager(self,store,tracker,new TitForTatManager(Clock.systemUTC(),new Random()),settings(Duration.ofSeconds(5)),e->{})) {
+                assertArrayEquals(f.bytes(),Files.readAllBytes(manager.download(f.metadata().fileId())));
+                assertEquals(0,firstCalls.get());
+                assertEquals(1,secondCalls.get());
+            }
         }
     }
     @Test void usesFiveConcurrentConnectionsAndPositionalWrites() throws Exception {
@@ -129,6 +164,7 @@ class ParallelDownloadManagerTest {
             var last=manager.states().getFirst();
             assertEquals("b-good",last.sourcePeerId());assertEquals(2,last.attemptCount());
             assertFalse(last.failoverHistory().isEmpty());
+            assertEquals(failure.equals("corrupt") ? List.of("a-bad") : List.of(),tracker.badChunks);
             assertEquals(1,tracker.heartbeats.stream().filter(r->r.availableChunks().contains(0)).count());
         }
     }

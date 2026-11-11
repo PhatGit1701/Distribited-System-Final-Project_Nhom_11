@@ -17,7 +17,7 @@ export function useNode() {
     if (error.status === 401) {
       setSession(null);
       dispatch({ type: 'RESET' });
-      setNotice({ kind: 'error', text: 'Your node session has expired. Sign in to reconnect.' });
+      setNotice({ kind: 'error', text: error.message || 'Your node session has expired. Sign in to reconnect.' });
     } else setNotice({ kind: 'error', text: error.message || 'The node could not be reached.' });
   }, []);
 

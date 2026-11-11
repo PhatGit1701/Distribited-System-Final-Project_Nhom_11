@@ -1,4 +1,6 @@
 package vn.nhom11.bittorrent.peer;
+import vn.nhom11.bittorrent.peer.event.NodeEventHub;
+import vn.nhom11.bittorrent.peer.model.ChunkDownloadState;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;

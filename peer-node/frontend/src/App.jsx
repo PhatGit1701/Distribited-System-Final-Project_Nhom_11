@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNode } from './useNode.js';
 import { request } from './api.mjs';
+import { selectAvailableFile } from './selection.mjs';
 import { chunkDetails, transferStats } from './model.mjs';
 
 function Icon({ name, size = 20, ...props }) {
@@ -223,20 +224,31 @@ export function App() {
   const download = state.downloads[selectedId];
 
   useEffect(() => {
-    if ((!selectedId || !state.torrents.some(file => file.fileId === selectedId)) && state.torrents.length) setSelectedId(state.torrents[0].fileId);
+    setSelectedId(selectAvailableFile(state.torrents, selectedId));
   }, [state.torrents, selectedId]);
   useEffect(() => { setSelectedChunk(null); }, [selectedId]);
   useEffect(() => {
     setPeers([]);
     if (!session || !selectedId) return;
     let active = true;
+    let missing = false;
     const controller = new AbortController();
     const load = async () => {
+      if (missing) return;
       setPeerLoading(true);
       try {
         const result = await request(`/swarm/${encodeURIComponent(selectedId)}`, { signal: controller.signal });
         if (active) setPeers(result || []);
-      } catch (error) { if (active && error.name !== 'AbortError') node.handleError(error); }
+      } catch (error) {
+        if (active && error.name !== 'AbortError') {
+          if (error.status === 404) {
+            missing = true;
+            setPeers([]);
+            node.handleError(new Error('This file is no longer registered on the tracker. Publish it again to restore its swarm.'));
+            node.refresh();
+          } else node.handleError(error);
+        }
+      }
       finally { if (active) setPeerLoading(false); }
     };
     load();

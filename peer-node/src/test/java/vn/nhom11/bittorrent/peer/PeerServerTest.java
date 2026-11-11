@@ -1,4 +1,7 @@
 package vn.nhom11.bittorrent.peer;
+import vn.nhom11.bittorrent.peer.network.PeerTcpServer;
+import vn.nhom11.bittorrent.peer.repository.ChunkStore;
+import vn.nhom11.bittorrent.peer.service.TitForTatManager;
 
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.io.TempDir;

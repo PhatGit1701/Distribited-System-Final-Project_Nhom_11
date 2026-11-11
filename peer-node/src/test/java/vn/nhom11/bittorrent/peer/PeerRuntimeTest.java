@@ -1,4 +1,7 @@
 package vn.nhom11.bittorrent.peer;
+import vn.nhom11.bittorrent.peer.network.PeerTcpServer;
+import vn.nhom11.bittorrent.peer.repository.ChunkStore;
+import vn.nhom11.bittorrent.peer.service.PeerRuntime;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpServer;
@@ -67,6 +70,16 @@ class PeerRuntimeTest {
                     var r=json.readValue(exchange.getRequestBody(),vn.nhom11.bittorrent.shared.HeartbeatRequest.class);
                     var p=new vn.nhom11.bittorrent.shared.PeerNodeInfo(r.peerId(),r.username(),r.ipAddress(),r.tcpPort(),r.availableChunks(),java.time.Instant.now());
                     peers.put(r.peerId(),p);result=p;
+                } else if(path.startsWith("/api/tracker/sources/")) {
+                    var m=metadata.get(path.substring(path.lastIndexOf('/')+1));
+                    var request=json.readTree(exchange.getRequestBody());
+                    var chunks=new java.util.ArrayList<vn.nhom11.bittorrent.shared.SourcePlan.ChunkSources>();
+                    for(int i=0;i<m.totalChunks();i++) {
+                        final int chunk=i;
+                        var candidates=peers.values().stream().filter(p->!p.peerId().equals(request.get("peerId").asText())&&p.availableChunks().contains(chunk)).toList();
+                        chunks.add(new vn.nhom11.bittorrent.shared.SourcePlan.ChunkSources(i,candidates.size(),candidates));
+                    }
+                    result=new vn.nhom11.bittorrent.shared.SourcePlan(m.fileId(),chunks,1,0,30);
                 } else if(path.startsWith("/api/tracker/swarm/")) {result=List.copyOf(peers.values());}
                 byte[] bytes=json.writeValueAsBytes(result);
                 exchange.getResponseHeaders().set("Content-Type","application/json");
